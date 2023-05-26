@@ -79,7 +79,6 @@ if __name__ == '__main__':
     for result in results:
         if result:
             print("\n\nBruteforce SUCCESS!!")
-            print("password is", result)
-
+            print(f"password is \"{result}\".")
     
 
