@@ -3,7 +3,7 @@ import requests
 import time
 
 url = "http://localhost/vulnerabilities/brute/"
-cookie = "sqv78s0cmf06s3da5nqu4du4t"
+cookie = "sqv78s0cmf06s3da5nqu4du4t5"
 level = "medium"
 head = {"PHPSESSID":f"{cookie}", "security":f"{level}"}
 

